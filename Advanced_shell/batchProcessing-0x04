@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# List of Pokémon to fetch
+# List of Pokémon
 POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 
-# Output directory and log file
+# Directory and log setup
 OUTPUT_DIR="pokemon_data"
 LOG_FILE="errors_parallel.log"
-
-# Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
-
-# Clear previous logs
 > "$LOG_FILE"
+
+# Array to hold background process IDs
+PIDS=()
 
 # Function to fetch data
 fetch_pokemon() {
@@ -20,7 +19,6 @@ fetch_pokemon() {
 
     echo "Fetching data for $POKEMON..."
 
-    # Fetch using curl and check success
     if curl -s -f "https://pokeapi.co/api/v2/pokemon/$POKEMON" -o "$OUTPUT_FILE"; then
         echo "Saved data to $OUTPUT_FILE ✅"
     else
@@ -28,13 +26,19 @@ fetch_pokemon() {
     fi
 }
 
-# Fetch all in parallel
+# Trap to handle script interruption (Ctrl+C) and kill background jobs
+trap 'echo "Script interrupted. Killing background processes..."; kill ${PIDS[*]} 2>/dev/null; exit 1' SIGINT
+
+# Launch all fetch operations in parallel
 for POKEMON in "${POKEMONS[@]}"; do
     fetch_pokemon "$POKEMON" &
+    PIDS+=($!)  # Store PID of background job
 done
 
 # Wait for all background jobs to complete
-wait
+for PID in "${PIDS[@]}"; do
+    wait "$PID"
+done
 
 echo "✅ All Pokémon fetch operations complete."
 
