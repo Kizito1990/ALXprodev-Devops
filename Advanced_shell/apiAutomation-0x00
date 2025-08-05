@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Define output files
+DATA_FILE="data.json"
+ERROR_FILE="errors.txt"
+POKEMON="pikachu"
+
+# Make API request to get Pikachu data
+curl -s -f "https://pokeapi.co/api/v2/pokemon/$POKEMON" -o "$DATA_FILE"
+
+# Check if curl was successful
+if [ $? -ne 0 ]; then
+    echo "[$(date)] Error fetching data for $POKEMON" >> "$ERROR_FILE"
+fi
